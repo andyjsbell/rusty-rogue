@@ -1,43 +1,40 @@
-//! Opens an empty window.
-
-use amethyst::{
-    input::is_key_down, prelude::*, utils::application_root_dir, window::WindowBundle,
-    winit::VirtualKeyCode,
+use bevy::{
+    prelude::*,
+    render::pass::ClearColor,
+    // sprite::collide_aabb::{collide, Collision},
 };
 
-struct ExampleState;
+fn setup(commands: &mut Commands, asset_server: Res<AssetServer>, mut materials: ResMut<Assets<ColorMaterial>>) {
+    let texture_handle = asset_server.load("sensei.png");
+    commands
+        .spawn(Camera2dBundle::default())
+        .spawn(SpriteBundle {
+            material: materials.add(texture_handle.into()),
+            ..Default::default()
+        });
+}
 
-impl SimpleState for ExampleState {
-    fn handle_event(
-        &mut self,
-        _: StateData<'_, GameData<'_, '_>>,
-        event: StateEvent,
-    ) -> SimpleTrans {
-        if let StateEvent::Window(event) = event {
-            if is_key_down(&event, VirtualKeyCode::Escape) {
-                Trans::Quit
-            } else {
-                Trans::None
-            }
-        } else {
-            Trans::None
-        }
+
+/// This system prints 'A' key state
+fn keyboard_input_system(keyboard_input: Res<Input<KeyCode>>) {
+    if keyboard_input.pressed(KeyCode::A) {
+        println!("'A' currently pressed");
+    }
+
+    if keyboard_input.just_pressed(KeyCode::A) {
+        println!("'A' just pressed");
+    }
+
+    if keyboard_input.just_released(KeyCode::A) {
+        println!("'A' just released");
     }
 }
 
-fn main() -> amethyst::Result<()> {
-    amethyst::start_logger(Default::default());
-
-    let app_root = application_root_dir()?;
-    let display_config_path = app_root.join("config/display.ron");
-
-    let assets_dir = app_root.join("assets");
-
-    let game_data = GameDataBuilder::default()
-        .with_bundle(WindowBundle::from_config_path(display_config_path)?)?;
-
-    let mut game = Application::new(assets_dir, ExampleState, game_data)?;
-    game.run();
-
-    Ok(())
+fn main() {
+    App::build()
+        .add_plugins(DefaultPlugins)
+        .add_resource(ClearColor(Color::rgb(0.9, 0.9, 0.9)))
+        .add_startup_system(setup.system())
+        .add_system(keyboard_input_system.system())
+        .run();
 }
